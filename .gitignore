@@ -8,3 +8,7 @@ terraform.tfstate.*
 
 # Carpetas generadas
 generated_environment/
+
+# Achivos generados 
+placeholder_1748976811.txt
+setup_log.txt
