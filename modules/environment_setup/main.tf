@@ -1,18 +1,9 @@
-variable "base_path" {
-  description = "Ruta base para el entorno."
-  type        = string
-}
-
-variable "nombre_entorno_modulo" {
-  description = "Nombre del entorno para este módulo."
-  type        = string
-}
-
 resource "null_resource" "crear_directorio_base" {
   # Usar provisioner para crear el directorio si no existe
   # Esto asegura que el directorio existe antes de que otros recursos intenten usarlo
   provisioner "local-exec" {
     command = "mkdir -p ${var.base_path}/${var.nombre_entorno_modulo}_data"
+    interpreter = ["bash", "-c"]
   }
   # Añadir un trigger para que se ejecute si cambia el nombre del entorno
   triggers = {

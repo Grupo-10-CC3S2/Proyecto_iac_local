@@ -77,7 +77,8 @@ output "ruta_bienvenida" {
 variable "python_executable" {
   description = "Ruta al ejecutable de Python (python o python3)."
   type        = string
-  default     = "python3"
+  #default     = "python3"
+  default = "python"
 }
 
 locals {
