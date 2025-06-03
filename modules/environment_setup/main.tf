@@ -3,7 +3,7 @@ resource "null_resource" "crear_directorio_base" {
   # Esto asegura que el directorio existe antes de que otros recursos intenten usarlo
   provisioner "local-exec" {
     command = "mkdir -p ${var.base_path}/${var.nombre_entorno_modulo}_data"
-    interpreter = ["bash", "-c"]
+    interpreter = [ "bash", "-c" ]
   }
   # Añadir un trigger para que se ejecute si cambia el nombre del entorno
   triggers = {
@@ -24,7 +24,7 @@ resource "random_id" "entorno_id_modulo" {
 resource "null_resource" "ejecutar_setup_inicial" {
   depends_on = [local_file.readme_entorno]
   triggers = {
-    readme_md5 = local_file.readme_entorno.content_md5 # Se re-ejecuta si el README cambia
+    setup_version = var.setup_version
   }
   provisioner "local-exec" {
     command     = "bash ${path.module}/scripts/initial_setup.sh '${var.nombre_entorno_modulo}' '${local_file.readme_entorno.filename}'"
