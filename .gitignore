@@ -10,5 +10,5 @@ terraform.tfstate.*
 generated_environment/
 
 # Achivos generados 
-placeholder_1748976811.txt
+placeholder_*.txt
 setup_log.txt
