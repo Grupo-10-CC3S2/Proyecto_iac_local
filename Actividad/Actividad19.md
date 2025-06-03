@@ -680,8 +680,66 @@ proyecto_iac_local/
       * **Tarea:** El script `initial_setup.sh` crea `placeholder_$(date +%s).txt`, lo que significa que cada vez que se ejecuta (si los `triggers` lo permiten), crea un nuevo archivo.
       * **Pasos:**
         1.  Modifica `initial_setup.sh` para que sea más idempotente: antes de crear `placeholder_...txt`, debe verificar si ya existe un archivo `placeholder_control.txt`. Si no existe, lo crea y también crea el `placeholder_...txt`. Si `placeholder_control.txt` ya existe, no hace nada más.
+
+          *Se añade el siguiente bloque a `initial_setup.sh`. Verifica que se haya creado un archivo `placeholder_....txt` y si es que si (el estado del sistema se encuentra en el que deseamos), no se realiza ninguna acción. Si aún no existe dicho archivo, se crea uno nuevo.*
+
+          ```bash
+          if [ -e placeholder_*.txt ]; then
+              echo "El archivo ya existe"
+          else
+              echo "El archivo aún no existe. Creando archivo de placeholder..."
+              touch placeholder_$(date +%s).txt
+          fi
+          ```
+
         2.  Ajusta los `triggers` del `null_resource "ejecutar_setup_inicial"` en el módulo `environment_setup` para que el script se ejecute de forma más predecible (quizás solo si una variable específica cambia).
+
+          *En `modules/environment_setup/variables.tf`:*
+          
+          ```terraform
+          variable "setup_version" {
+            description = "Versión del setup inicial"
+            type = string
+            default = "v0" // // Cambiar este valor por defecto para forzar la re-ejecucion en el recurso "ejecutar_setup_inicial"
+          }
+          ```
+
+          *En `modules/environment_setup/main.tf`:*
+
+          ```terraform 
+          resource "null_resource" "ejecutar_setup_inicial" {
+            ...
+            triggers = {
+              setup_version = var.setup_version
+            }
+            ...
+          }
+          ```
+
+          *Ahora, un cambio en la variable que almacena la versión del setup hace que se reconstruya el setup inicial.*
+
+
       * **Reto adicional:** Implementa un "contador de ejecución" en un archivo dentro de `generated_environment`, que el script `initial_setup.sh` incremente solo si realmente realiza una acción.
+
+        ```bash
+        COUNTER_FILE="${README_PATH%/*}/counter.txt"
+        if [ -e placeholder_*.txt ]; then
+            ...
+        else
+            ...
+            # Ejercicio adicional de 3 
+            if [ -e "$COUNTER_FILE" ]; then
+                count=$(cat "$COUNTER_FILE")
+                count=$((count + 1))
+            else 
+                count=1
+            fi
+
+            echo "$count" > "$COUNTER_FILE"
+        fi
+        ```
+
+        *Si es que no se encuentra el placeholder, el script realiza una acción (crear el placeholder). Por lo que ahí es donde debemos aumentar el contador.*
 
 4.  **Ejercicio de seguridad simulada y validación:**
 
