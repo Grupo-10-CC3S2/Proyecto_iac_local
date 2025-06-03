@@ -14,8 +14,6 @@ Los siguientes comandos se ejecutan desde la raíz del proyecto (revisa [Terrafo
 
    * Descarga los providers (`local`, `random`).
 
-   ![](imagenes/instrucciones/1.png)
-
 2. **Planificar cambios**
 
    ```bash
@@ -29,15 +27,11 @@ Los siguientes comandos se ejecutan desde la raíz del proyecto (revisa [Terrafo
      terraform plan -var="nombre_entorno=dev_local" -var-file="terraform.tfvars"
      ```
 
-   ![](imagenes/instrucciones/2.png)
-
 3. **Aplicar cambios**
 
    ```bash
    terraform apply -var-file="terraform.tfvars" -auto-approve (tambien puedes usar terraform apply)
    ```
-
-   ![](imagenes/instrucciones/3.png)
 
    * Ejecuta la orquestación completa:
 

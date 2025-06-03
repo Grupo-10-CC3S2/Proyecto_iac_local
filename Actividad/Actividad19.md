@@ -222,9 +222,9 @@ proyecto_iac_local/
         ```
         
         - main.tf(raiz) modificado
-        ![](imagenes/Actividad19/fase2.1.png)
+        ![](Imagenes/fase2.1.png)
         - archivos generados
-        ![](imagenes/Actividad19/fase2.2.png)
+        ![](Imagenes/fase2.2.png)
 
 **Fase 3: Módulos, plantillas y scripts Python**
 
@@ -632,7 +632,7 @@ proyecto_iac_local/
         }
         ```
         - "terraform apply" tras crear y/o modificar
-        ![](imagenes/Actividad19/fase4.png)
+        ![](Imagenes/fase4.png)
 
 
 #### Ejercicios
@@ -642,36 +642,36 @@ proyecto_iac_local/
       * **Tarea:** Añade un nuevo "servicio" llamado `database_connector` al `local.common_app_config` en `main.tf`. Este servicio requiere un parámetro adicional en su configuración JSON llamado `connection_string`.
       * **Pasos:**
         1.  Modifica `main.tf` para incluir `database_connector`.
-          ![](imagenes/Actividad19/e1.1.png)
+          ![](Imagenes/e1.1.png)
         2.  Modifica el módulo `application_service`:
               * Añade una nueva variable `connection_string_tpl` (opcional, por defecto un string vacío).
-              ![](imagenes/Actividad19/e1.2.1.png)
+              ![](Imagenes/e1.2.1.png)
               * Actualiza `config.json.tpl` para incluir este nuevo campo.
               * Haz que el `connection_string` solo se incluya si la variable no está vacía (usar condicionales en la plantilla o en `locals` del módulo).
-              ![](imagenes/Actividad19/e1.2.2.png)
+              ![](Imagenes/e1.2.2.png)
         3.  Actualiza el script `validate_config.py` para que verifique la presencia y formato básico de `connection_string` SOLO para el servicio `database_connector`.
-        ![](imagenes/Actividad19/e1.3.png)
+        ![](Imagenes/e1.3.png)
       * **Reto adicional:** Haz que el `start_simulated_service.sh` cree un archivo `.db_lock` si el servicio es `database_connector`.
-      ![](imagenes/Actividad19/e1.4.png)
+      ![](Imagenes/e1.4.png)
       - terraform apply
-      ![](imagenes/Actividad19/e1.5.png)
+      ![](Imagenes/e1.5.png)
       - archivos creados
-      ![](imagenes/Actividad19/e1.6.png)
+      ![](Imagenes/e1.6.png)
 
 2.  **Ejercicio de refactorización y principios:**
 
       * **Tarea:** Actualmente, el `generate_app_metadata.py` se llama para cada servicio. Imagina que parte de los metadatos es común a *todos* los servicios en un "despliegue" (ej. un `deployment_id` global).
       * **Pasos:**
         1.  Crea un nuevo script Python, `generate_global_metadata.py`, que genere este `deployment_id` (puede ser un `random_uuid`).
-        ![](imagenes/Actividad19/2.1.png)
+        ![](Imagenes/2.1.png)
         2.  En el `main.tf` raíz, usa `data "external"` para llamar a este nuevo script UNA SOLA VEZ.
-        ![](imagenes/Actividad19/2.2.png)
+        ![](Imagenes/2.2.png)
         3.  Pasa el `deployment_id` resultante como una variable de entrada al módulo `application_service`.
-        ![](imagenes/Actividad19/2.3.png)
+        ![](Imagenes/2.3.png)
         4.  Modifica `generate_app_metadata.py` y/o `config.json.tpl` dentro del módulo `application_service` para que incorpore este `deployment_id` global.
-        ![](imagenes/Actividad19/2.4.png)
+        ![](Imagenes/2.4.png)
         - Resultado
-        ![](imagenes/Actividad19/2.5.png)
+        ![](Imagenes/2.5.png)
       * **Discusión:** ¿Cómo mejora esto la composabilidad y reduce la redundancia? ¿Cómo afecta la idempotencia?
 
         Esta implementacion separa claramente caracteristicas generales de todos los servicios de las caracteristicas especificas de cada uno, lo que hace que el codigo sea mas facil de mantener y reutilizar , ademas tambien reduce la redundancia ya que el deployment_id se genera una vez para todos los servicios. La implementacion hecha no es idempotente, el deployment_id cambia cada vez que ejecutamos terraform apply.
