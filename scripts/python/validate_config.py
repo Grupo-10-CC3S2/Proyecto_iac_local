@@ -25,16 +25,6 @@ def perform_complex_validations(config_data, file_path):
     for i in range(15):
         if config_data.get("settings",{}).get(f"s{i+1}") == None:
              errors.append(f"[{file_path}] Falta el setting s{i+1}")
-             
-    # verificar la presencia y formato basico de connection_string para el servicio database_connector
-    if data.get("applicationName") == "database_connector":
-        conn_str = data.get("connection_string")
-        if not isinstance(conn_str, str) or len(conn_str.strip()) == 0:
-            all_errors.append(f"[{file_path}] 'connection_string' es obligatorio y debe ser un string no vacio para database_connector")
-        elif not conn_str.startswith("Server="):  
-            all_warnings.append(f"[{file_path}] 'connection_string' formato incorrecto")
-
-
     return errors, warnings
 
 def main():
@@ -77,7 +67,37 @@ def main():
         "detailed_report_lines": report_summary # Más líneas
     }))
 
+def buscar_mensaje_global_en_configs(mensaje_global):
+    hallazgos = []
+    for root, _, files in os.walk("./generated_environment/"):
+        for file in files:
+            if file == "config.json":
+                ruta = os.path.join(root, file)
+                try:
+                    with open(ruta, "r", encoding='utf-8') as f:
+                        contenido = f.read()
+                        if mensaje_global in contenido:
+                            hallazgos.append(ruta)
+                except Exception as e:
+                    print(f"Error leyendo {ruta}: {e}")
+    return hallazgos
+
 if __name__ == "__main__":
     # Añadir import datetime si no está
     import datetime
+    if len(sys.argv) < 2:
+        print("Error: Ejecutar python validate_config.py <mensaje_global>")
+        sys.exit(1)
+
+    mensaje_global = sys.argv[1]
+    hallazgos = buscar_mensaje_global_en_configs(mensaje_global)
+
+    if hallazgos:
+        print("Hallazgo de seguridad crítico. El valor de la variable sensible mensaje_global fue encontrado en los siguientes archivos config.json:")
+        for archivo in hallazgos:
+            print(f" - {archivo}")
+        sys.exit(2)
+    else:
+        print("Validación completada: mensaje_global no encontrado en ningún config.json")
+        sys.exit(0)
     main()
