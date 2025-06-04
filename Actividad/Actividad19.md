@@ -746,8 +746,102 @@ proyecto_iac_local/
       * **Tarea:** El `mensaje_global` se marca como `sensitive` en `variables.tf`. Sin embargo, se escribe directamente en `config.json`.
       * **Pasos:**
         1.  Modifica el script `validate_config.py` para que busque explícitamente el contenido de `mensaje_global` (que el estudiante tendrá que "conocer" o pasar como argumento al script de validación) dentro de los archivos `config.json`. Si lo encuentra, debe marcarlo como un "hallazgo de seguridad crítico".
+
+            ```python
+            def buscar_mensaje_global_en_configs(mensaje_global):
+              hallazgos = []
+              for root, _, files in os.walk("./generated_environment/"):
+                  for file in files:
+                      if file == "config.json":
+                          ruta = os.path.join(root, file)
+                          try:
+                              with open(ruta, "r", encoding='utf-8') as f:
+                                  contenido = f.read()
+                                  if mensaje_global in contenido:
+                                      hallazgos.append(ruta)
+                          except Exception as e:
+                              print(f"Error leyendo {ruta}: {e}")
+              return hallazgos
+
+            if __name__ == "__main__":
+              # Añadir import datetime si no está
+              import datetime
+              if len(sys.argv) < 2:
+                  print("Error: Ejecutar python validate_config.py <mensaje_global>")
+                  sys.exit(1)
+
+              mensaje_global = sys.argv[1]
+              hallazgos = buscar_mensaje_global_en_configs(mensaje_global)
+
+              if hallazgos:
+                  print("Hallazgo de seguridad crítico. El valor de la variable sensible mensaje_global fue encontrado en los siguientes archivos config.json:")
+                  for archivo in hallazgos:
+                      print(f" - {archivo}")
+                  sys.exit(2)
+              else:
+                  print("Validación completada: mensaje_global no encontrado en ningún config.json")
+                  sys.exit(0)
+              main()
+            ```
+
+            *El contenido de mensaje_global, es por defecto, "Configuración gestionada por Terraform."*
+
+            ![](Imagenes/ej4.png)
+
         2.  Discute cómo Terraform maneja los valores `sensitive` y cómo esto se puede perder si no se tiene cuidado al pasarlos a scripts o plantillas.
+
+            *Terraform oculta estos valores en la salida de los comandos que maneja. Esto ayuda a proteger información sensible como contraseñas o secretos. El problema es que esto solo se aplica "dentro" de Terraform. Si es que manejamos la variable en una herramienta externa, esta podría visibilizarse en algún lado del proyecto.*
+
         3.  (Opcional) Modifica la plantilla `config.json.tpl` para ofuscar o no incluir directamente el `mensaje_global` si es demasiado sensible, tal vez solo una referencia.
+
+            *En `config.json.tpl` se define una plantilla que genera archivos de configuración JSON. Podríamos simplemente no añadir mensaje_global, pero dado que en nuestro archivo no está directamente añadido, sino que, en uno de los archivos de terraform (`modules/application_service/main.tf`) se define:*
+
+            ```terraform
+            data "template_file" "app_config" {
+              template = file("${path.module}/templates/config.json.tpl")
+              vars = {
+                app_name_tpl    = var.app_name
+                app_version_tpl = var.app_version
+                deployment_id_tpl = var.deployment_id
+                port_tpl        = var.app_port
+                deployed_at_tpl = timestamp()
+                message_tpl     = var.global_message_from_root # Aquí
+                connection_string_field = local.connection_string_field
+                connection_string_tpl = var.connection_string != null ? var.connection_string : ""
+              }
+            }
+            ```
+
+            y en `main.tf`:
+
+            ```terraform
+            module "simulated_apps" {
+              for_each = local.common_app_config
+
+              source            = "./modules/application_service"
+              app_name          = each.key
+              app_version       = each.value.version
+              app_port          = each.value.port
+              base_install_path = "${path.cwd}/generated_environment/services"
+              global_message_from_root = var.mensaje_global
+              python_exe        = var.python_executable
+              connection_string_tpl = lookup(each.value, "connection_string", "")
+              deployment_id     = data.external.global_metadata_py.result.deployment_id
+            }
+            ```
+
+            Entonces, debido a que `message_tpl` únicamente tiene como función, en `config.json.tpl`, mostrar la variable sensible `mensaje_global`, la podemos eliminar.
+
+            ```json
+            {
+              ...
+              // "notes": "Este es un archivo de configuración autogenerado. ${message_tpl}",
+              "notes": "Este es un archivo de configuración autogenerado."
+              ...
+            }
+            ```
+
+            o también podriamos ofuscarlo en los archivos de terraform con `sha256()`.
 
 #### Presentación
 
